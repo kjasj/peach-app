@@ -27,8 +27,13 @@ android {
             val keyAliasStr = System.getenv("KEY_ALIAS") ?: (project.findProperty("KEY_ALIAS") as? String)
             val keyPass = System.getenv("KEY_PASSWORD") ?: (project.findProperty("KEY_PASSWORD") as? String)
 
-            if (!keystorePath.isNullOrEmpty() && file(keystorePath).exists() && !storePass.isNullOrEmpty()) {
-                storeFile = file(keystorePath)
+            val ksFile = if (!keystorePath.isNullOrEmpty()) {
+                val candidate = file(keystorePath)
+                if (candidate.exists()) candidate else rootProject.file(keystorePath)
+            } else null
+
+            if (ksFile != null && ksFile.exists() && !storePass.isNullOrEmpty()) {
+                storeFile = ksFile
                 storePassword = storePass
                 keyAlias = keyAliasStr
                 keyPassword = keyPass
