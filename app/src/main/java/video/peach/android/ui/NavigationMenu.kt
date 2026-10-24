@@ -15,12 +15,16 @@ import video.peach.android.data.AppNavigation
 @Composable fun NavigationMenu(selected: String, close: () -> Unit, select: (String) -> Unit, advanced: () -> Unit) {
     ModalBottomSheet(onDismissRequest = close, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp)) {
-            item { Text("导航菜单", style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.height(12.dp)) }
-            items(AppNavigation.primary + AppNavigation.extras) { entry ->
+            item(key = "nav_header", contentType = "header") { Text("导航菜单", style = MaterialTheme.typography.headlineSmall); Spacer(Modifier.height(12.dp)) }
+            items(
+                items = AppNavigation.primary + AppNavigation.extras,
+                key = { it.key },
+                contentType = { "nav_item" }
+            ) { entry ->
                 NavigationDrawerItem(label = { Text(entry.title) }, selected = selected == entry.key,
                     onClick = { close(); select(entry.key) }, modifier = Modifier.padding(vertical = 2.dp).testTag("nav-${entry.key}"))
             }
-            item {
+            item(key = "nav_footer", contentType = "footer") {
                 HorizontalDivider(Modifier.padding(vertical = 12.dp))
                 ListItem(headlineContent = { Text("其他功能与管理工具") }, modifier = Modifier.clickable { close(); advanced() })
             }

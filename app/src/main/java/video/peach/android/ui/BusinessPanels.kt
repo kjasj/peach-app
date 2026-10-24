@@ -14,7 +14,7 @@ import video.peach.android.data.*
 @Composable fun TasksContent(payload: JSONObject, vm: AppViewModel, modifier: Modifier = Modifier) {
     val sections = listOf("running" to "正在进行", "skipped" to "未执行", "finished" to "最近完成", "runs" to "任务记录")
     LazyColumn(modifier, contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
+        item(key = "management_shortcuts", contentType = "shortcuts") {
             Text("常用管理", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { vm.navigate("/api/downloads") }) { Text("云下载") }
@@ -22,13 +22,17 @@ import video.peach.android.data.*
                 TextButton(onClick = { vm.navigate("/api/stats") }) { Text("馆藏统计") }
             }
         }
-        payload.text("message").takeIf(String::isNotBlank)?.let { message -> item { Notice(message) } }
+        payload.text("message").takeIf(String::isNotBlank)?.let { message -> item(key = "tasks_message", contentType = "notice") { Notice(message) } }
         for ((key, title) in sections) {
             val rows = payload.optJSONArray(key)?.objects().orEmpty()
             if (payload.has(key)) {
-                item { Text("$title · ${rows.size}", style = MaterialTheme.typography.titleMedium) }
-                if (rows.isEmpty()) item { Text(if (key == "running") "当前没有正在运行的任务" else "暂无记录", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                items(rows) { row -> TaskCard(row, vm) }
+                item(key = "section_header_$key", contentType = "section_header") { Text("$title · ${rows.size}", style = MaterialTheme.typography.titleMedium) }
+                if (rows.isEmpty()) item(key = "empty_$key", contentType = "empty_hint") { Text(if (key == "running") "当前没有正在运行的任务" else "暂无记录", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                items(
+                    items = rows,
+                    key = { row -> "task_${key}_${row.text("id", "run_id", "task_key", "started_at").ifBlank { row.hashCode().toString() }}" },
+                    contentType = { "task_card" }
+                ) { row -> TaskCard(row, vm) }
             }
         }
     }
@@ -58,9 +62,13 @@ import video.peach.android.data.*
 @Composable fun FollowSources(payload: JSONObject, vm: AppViewModel, modifier: Modifier = Modifier, selectRecord: (JSONObject) -> Unit) {
     val rows = payload.optJSONArray("sources")?.objects().orEmpty()
     LazyColumn(modifier, contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Text("关注来源与分组", style = MaterialTheme.typography.titleMedium) }
-        if (rows.isEmpty()) item { EmptyState("还没有关注来源", "通过上方添加来源录入来源链接后，可在动态页查看更新。") }
-        items(rows) { row ->
+        item(key = "follow_sources_header", contentType = "header") { Text("关注来源与分组", style = MaterialTheme.typography.titleMedium) }
+        if (rows.isEmpty()) item(key = "empty_sources", contentType = "empty_state") { EmptyState("还没有关注来源", "通过上方添加来源录入来源链接后，可在动态页查看更新。") }
+        items(
+            items = rows,
+            key = { row -> "source_${row.text("id", "url").ifBlank { row.hashCode().toString() }}" },
+            contentType = { "source_card" }
+        ) { row ->
             OutlinedCard(onClick = { selectRecord(row) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.text("label", "source_label", "name").ifBlank { "关注来源" }, style = MaterialTheme.typography.titleMedium)

@@ -99,7 +99,7 @@ import video.peach.android.player.PlaybackViewModel
     val actions = vm.registry.actions(state.page)
     Column(Modifier.fillMaxSize()) {
         LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(AppNavigation.primary) { entry ->
+            items(AppNavigation.primary, key = { it.key }, contentType = { "nav_chip" }) { entry ->
                 FilterChip(selected = state.section == entry.key, onClick = { vm.select(entry.key) }, label = { Text(entry.title) })
             }
         }
@@ -109,7 +109,11 @@ import video.peach.android.player.PlaybackViewModel
             }
         }
         if (state.section == "follow") LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(listOf("动态" to "/api/follow", "创作者" to "/api/follow/authors", "来源与分组" to "/api/follow?summary=1", "采集计划" to "/api/follow/schedule")) { (label, destination) ->
+            items(
+                items = listOf("动态" to "/api/follow", "创作者" to "/api/follow/authors", "来源与分组" to "/api/follow?summary=1", "采集计划" to "/api/follow/schedule"),
+                key = { it.second },
+                contentType = { "follow_chip" }
+            ) { (label, destination) ->
                 val summary = destination.endsWith("?summary=1")
                 val path = destination.substringBefore('?')
                 FilterChip(selected = state.page == path && (state.query["summary"] == "1") == summary,
@@ -137,7 +141,7 @@ import video.peach.android.player.PlaybackViewModel
         if (state.stale) Box(Modifier.padding(horizontal = 18.dp)) { Notice("当前显示上次缓存，操作前请恢复服务器连接。") }
         if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (actions.isNotEmpty() && state.page != "/api/items") androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(actions) { action -> AssistChip(onClick = { chosen = action to payload }, label = { Text(action.title) }) }
+            items(actions, key = { it.path }, contentType = { "action_chip" }) { action -> AssistChip(onClick = { chosen = action to payload }, label = { Text(action.title) }) }
         }
         if (payload == null && !state.busy) { EmptyState(retry = { vm.refresh() }); return@Column }
         if (payload != null && state.page == "/api/tasks") { TasksContent(payload, vm, Modifier.weight(1f)); return@Column }
@@ -153,22 +157,45 @@ import video.peach.android.player.PlaybackViewModel
             LaunchedEffect(nearEnd, state.nextOffset, state.busy, state.moreError, state.stale) {
                 if (nearEnd && !state.busy && state.moreError == null && !state.stale) vm.loadNext()
             }
-            LazyVerticalStaggeredGrid(state = grid, columns = StaggeredGridCells.Adaptive(if (state.wall) 128.dp else 148.dp), contentPadding = PaddingValues(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalItemSpacing = 12.dp, modifier = Modifier.weight(1f).testTag("catalog-grid")) {
-                items(rows) { row -> if (isIndex) IndexCard(row, if (state.page == "/api/follow/authors") "creators" else state.query["kind"].orEmpty(), vm) else MediaCard(row, vm.client, onLongClick = { selectedRecord = row }, onClick = {
-                    when {
-                        state.page == "/api/follow" || row.optBoolean("_follow") -> selectedRecord = row.apply { put("_follow", true) }
-                        row.has("location") && row.has("id") -> vm.openItem(row)
-                        else -> selectedRecord = row
-                    }
-                }) }
-                item(span = StaggeredGridItemSpan.FullLine) { PagingFooter(state, vm) }
+            LazyVerticalStaggeredGrid(
+                state = grid,
+                columns = StaggeredGridCells.Adaptive(if (state.wall) 128.dp else 148.dp),
+                contentPadding = PaddingValues(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalItemSpacing = 12.dp,
+                modifier = Modifier.weight(1f).testTag("catalog-grid")
+            ) {
+                items(
+                    items = rows,
+                    key = { row -> catalogItemKey(row, isIndex) },
+                    contentType = { if (isIndex) "index_card" else "media_card" }
+                ) { row ->
+                    if (isIndex) IndexCard(row, if (state.page == "/api/follow/authors") "creators" else state.query["kind"].orEmpty(), vm)
+                    else MediaCard(row, vm.client, onLongClick = { selectedRecord = row }, onClick = {
+                        when {
+                            state.page == "/api/follow" || row.optBoolean("_follow") -> selectedRecord = row.apply { put("_follow", true) }
+                            row.has("location") && row.has("id") -> vm.openItem(row)
+                            else -> selectedRecord = row
+                        }
+                    })
+                }
+                item(span = StaggeredGridItemSpan.FullLine, key = "catalog_paging_footer", contentType = "paging_footer") {
+                    PagingFooter(state, vm)
+                }
             }
         } else {
             LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (state.page == "/api/follow") item { EmptyState("暂无关注动态", "可切换到“来源与分组”检查关注来源，或添加来源后检查更新。") }
-                else if (payload != null) item { RecordView(payload, vm.client, onRecord = { selectedRecord = it }) }
-                if (payload != null && payload.length() <= 1) item { EmptyState(message = "当前筛选没有匹配的内容。") }
-                if (state.nextOffset != null) item { PagingFooter(state, vm) }
+                if (state.page == "/api/follow") item(key = "empty_follow", contentType = "empty_state") {
+                    EmptyState("暂无关注动态", "可切换到“来源与分组”检查关注来源，或添加来源后检查更新。")
+                } else if (payload != null) item(key = "record_view", contentType = "record_view") {
+                    RecordView(payload, vm.client, onRecord = { selectedRecord = it })
+                }
+                if (payload != null && payload.length() <= 1) item(key = "empty_filter", contentType = "empty_state") {
+                    EmptyState(message = "当前筛选没有匹配的内容。")
+                }
+                if (state.nextOffset != null) item(key = "paging_footer", contentType = "paging_footer") {
+                    PagingFooter(state, vm)
+                }
             }
         }
     }
@@ -220,16 +247,27 @@ import video.peach.android.player.PlaybackViewModel
     }
 }
 
+private fun catalogItemKey(row: JSONObject, isIndex: Boolean): String {
+    val prefix = if (isIndex) "idx" else "media"
+    val id = row.text("id", "entity_id", "release_key", "k", "canonical_name", "name", "code", "path")
+    return if (id.isNotBlank()) "$prefix:$id" else "$prefix:${row.hashCode()}"
+}
+
 fun primaryRows(payload: JSONObject?, page: String): List<JSONObject> {
     if (payload == null) return emptyList()
     val primary = payload.optJSONArray("items")?.objects().orEmpty()
-    if (primary.isNotEmpty()) return if (page == "/api/follow") primary.map { JSONObject(it.toString()).put("_follow", true) } else primary
-    if (page == "/api/follow") return payload.optJSONArray("groups")?.objects().orEmpty().flatMap { group ->
-        val members = listOfNotNull(group.optJSONObject("primary")) +
-            group.optJSONArray("variants")?.objects().orEmpty() + group.optJSONArray("duplicates")?.objects().orEmpty()
-        members.distinctBy { it.text("id") }.map { JSONObject(it.toString()).put("_follow", true).put("_release_key", group.text("release_key")) }
+    val list = if (primary.isNotEmpty()) {
+        if (page == "/api/follow") primary.map { JSONObject(it.toString()).put("_follow", true) } else primary
+    } else if (page == "/api/follow") {
+        payload.optJSONArray("groups")?.objects().orEmpty().flatMap { group ->
+            val members = listOfNotNull(group.optJSONObject("primary")) +
+                group.optJSONArray("variants")?.objects().orEmpty() + group.optJSONArray("duplicates")?.objects().orEmpty()
+            members.distinctBy { it.text("id") }.map { JSONObject(it.toString()).put("_follow", true).put("_release_key", group.text("release_key")) }
+        }
+    } else {
+        payload.optJSONArray("rows")?.objects().orEmpty()
     }
-    return payload.optJSONArray("rows")?.objects().orEmpty()
+    return list.distinctBy { it.text("id", "entity_id", "release_key", "k", "canonical_name", "name", "code", "path").ifBlank { it.toString() } }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -243,8 +281,8 @@ fun primaryRows(payload: JSONObject?, page: String): List<JSONObject> {
                 for ((key, title) in listOf("library" to "馆藏与资料", "discover" to "发现与口味", "follow" to "关注与订阅", "manage" to "管理与维护")) {
                     val features = vm.registry.endpoints.filter { it.method == "GET" && it.group == key && (query.isBlank() || it.title.contains(query)) }
                     if (features.isNotEmpty()) {
-                        item { Text(title, Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.titleSmall) }
-                        items(features) { feature -> ListItem(headlineContent = { Text(feature.title) }, supportingContent = if (feature.localOnly) ({ Text("此操作需在服务器本机完成") }) else null, leadingContent = { Icon(if (feature.localOnly) Icons.Rounded.Computer else Icons.Rounded.FolderOpen, null) }, modifier = Modifier.clickable { onSelect(feature.path) }) }
+                        item(key = "header_$key", contentType = "group_header") { Text(title, Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.titleSmall) }
+                        items(features, key = { "feature_${it.path}" }, contentType = { "feature_item" }) { feature -> ListItem(headlineContent = { Text(feature.title) }, supportingContent = if (feature.localOnly) ({ Text("此操作需在服务器本机完成") }) else null, leadingContent = { Icon(if (feature.localOnly) Icons.Rounded.Computer else Icons.Rounded.FolderOpen, null) }, modifier = Modifier.clickable { onSelect(feature.path) }) }
                     }
                 }
             }
