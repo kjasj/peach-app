@@ -1,3 +1,5 @@
+import java.security.KeyStore
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -22,10 +24,10 @@ android {
     testOptions { unitTests.isReturnDefaultValues = true }
     signingConfigs {
         create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH") ?: project.findProperty("KEYSTORE_PATH") as? String
-            val storePass = System.getenv("KEYSTORE_PASSWORD") ?: (project.findProperty("KEYSTORE_PASSWORD") as? String)
-            val keyAliasStr = System.getenv("KEY_ALIAS") ?: (project.findProperty("KEY_ALIAS") as? String)
-            val keyPass = System.getenv("KEY_PASSWORD") ?: (project.findProperty("KEY_PASSWORD") as? String)
+            val keystorePath = System.getenv("KEYSTORE_PATH")?.trim() ?: (project.findProperty("KEYSTORE_PATH") as? String)?.trim()
+            val storePass = System.getenv("KEYSTORE_PASSWORD")?.trim() ?: (project.findProperty("KEYSTORE_PASSWORD") as? String)?.trim()
+            var keyAliasStr = System.getenv("KEY_ALIAS")?.trim() ?: (project.findProperty("KEY_ALIAS") as? String)?.trim()
+            val keyPass = System.getenv("KEY_PASSWORD")?.trim() ?: (project.findProperty("KEY_PASSWORD") as? String)?.trim()
 
             val ksFile = if (!keystorePath.isNullOrEmpty()) {
                 val candidate = file(keystorePath)
@@ -33,10 +35,29 @@ android {
             } else null
 
             if (ksFile != null && ksFile.exists() && !storePass.isNullOrEmpty()) {
+                try {
+                    val ks = KeyStore.getInstance(KeyStore.getDefaultType())
+                    ksFile.inputStream().use { ks.load(it, storePass.toCharArray()) }
+                    val aliasList = mutableListOf<String>()
+                    val enumAliases = ks.aliases()
+                    while (enumAliases.hasMoreElements()) {
+                        aliasList.add(enumAliases.nextElement())
+                    }
+                    if (keyAliasStr == null || !ks.containsAlias(keyAliasStr)) {
+                        val matched = aliasList.find { it.equals(keyAliasStr, ignoreCase = true) }
+                            ?: if (aliasList.size == 1) aliasList.first() else null
+                        if (matched != null) {
+                            keyAliasStr = matched
+                        }
+                    }
+                } catch (e: Exception) {
+                    println("Keystore 读取提示: ${e.message}")
+                }
+
                 storeFile = ksFile
                 storePassword = storePass
                 keyAlias = keyAliasStr
-                keyPassword = keyPass
+                keyPassword = if (!keyPass.isNullOrEmpty()) keyPass else storePass
             } else {
                 initWith(getByName("debug"))
             }

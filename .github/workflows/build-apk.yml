@@ -50,12 +50,12 @@ jobs:
         run: ./gradlew testDebugUnitTest lintDebug --stacktrace
 
       - name: 配置 Release 签名密钥 (如配置了 Secrets)
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           mkdir -p "$RUNNER_TEMP/keystore"
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/keystore/release.keystore"
+          python3 -c "import os, base64; open(os.environ['RUNNER_TEMP'] + '/keystore/release.keystore', 'wb').write(base64.b64decode(os.environ['KEYSTORE_BASE64'].strip()))"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/keystore/release.keystore" >> "$GITHUB_ENV"
 
       - name: 编译 Release 与 Debug APK
