@@ -17,16 +17,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -97,61 +109,74 @@ import video.peach.android.player.PlaybackViewModel
     var gallery by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     val endpoint = vm.registry.get(state.page)
     val actions = vm.registry.actions(state.page)
-    Column(Modifier.fillMaxSize()) {
-        LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(AppNavigation.primary, key = { it.key }, contentType = { "nav_chip" }) { entry ->
-                FilterChip(selected = state.section == entry.key, onClick = { vm.select(entry.key) }, label = { Text(entry.title) })
+
+    val rows = remember(payload) { primaryRows(payload, state.page) }
+    val isCatalog = state.page in listOf("/api/items", "/api/related", "/api/tops", "/api/parts", "/api/editions", "/api/jav/discoveries", "/api/follow", "/api/feeds/discoveries")
+    val isIndex = state.page in listOf("/api/index", "/api/follow/authors")
+    val isScrollable = (isCatalog || isIndex) && rows.isNotEmpty()
+
+    val density = LocalDensity.current
+    var headerHeightPx by remember { mutableFloatStateOf(with(density) { 96.dp.toPx() }) }
+    var headerOffsetPx by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(state.page, state.section) {
+        headerOffsetPx = 0f
+    }
+
+    val nestedScrollConnection = remember(headerHeightPx) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                if (delta < 0f) {
+                    val newOffset = (headerOffsetPx + delta).coerceIn(-headerHeightPx, 0f)
+                    headerOffsetPx = newOffset
+                    return Offset.Zero
+                } else {
+                    val prev = headerOffsetPx
+                    val newOffset = (headerOffsetPx + delta).coerceIn(-headerHeightPx, 0f)
+                    headerOffsetPx = newOffset
+                    val consumed = newOffset - prev
+                    return Offset(0f, consumed)
+                }
             }
         }
-        if (state.section == "jav") Row(Modifier.padding(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("馆藏" to "/api/items", "发现" to "/api/jav/discoveries", "想要" to "/api/wants").forEach { (label, path) ->
-                FilterChip(selected = state.page == path, onClick = { vm.navigate(path, if (path == "/api/items") mapOf("jav" to "1") else emptyMap(), section = "jav") }, label = { Text(label) })
-            }
+    }
+
+    val headerContent: @Composable () -> Unit = {
+        CatalogHeader(
+            vm = vm,
+            state = state,
+            payload = payload,
+            endpoint = endpoint,
+            actions = actions,
+            search = search,
+            onSearchChange = { search = it },
+            onFilterClick = { filter = true },
+            onActionClick = { chosen = it }
+        )
+    }
+
+    if (payload == null && !state.busy) {
+        Column(Modifier.fillMaxSize()) {
+            headerContent()
+            EmptyState(retry = { vm.refresh() })
         }
-        if (state.section == "follow") LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(
-                items = listOf("动态" to "/api/follow", "创作者" to "/api/follow/authors", "来源与分组" to "/api/follow?summary=1", "采集计划" to "/api/follow/schedule"),
-                key = { it.second },
-                contentType = { "follow_chip" }
-            ) { (label, destination) ->
-                val summary = destination.endsWith("?summary=1")
-                val path = destination.substringBefore('?')
-                FilterChip(selected = state.page == path && (state.query["summary"] == "1") == summary,
-                    onClick = { vm.navigate(path, if (summary) mapOf("summary" to "1") else emptyMap(), section = "follow") }, label = { Text(label) })
-            }
+    } else if (payload != null && state.page == "/api/tasks") {
+        Column(Modifier.fillMaxSize()) {
+            headerContent()
+            TasksContent(payload, vm, Modifier.weight(1f))
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(search, { search = it }, placeholder = { Text("搜索${endpoint?.title ?: "馆藏"}") }, singleLine = true, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), trailingIcon = {
-                IconButton(onClick = { vm.refresh(state.query + ("q" to search) + ("offset" to "0")) }) { Icon(Icons.Rounded.Search, "执行搜索") }
-            })
-            IconButton(onClick = { filter = true }) { Icon(Icons.Rounded.Tune, "筛选与排序") }
-            IconButton(onClick = { showSections = true }) { Icon(Icons.Rounded.GridView, "所有功能") }
+    } else if (payload != null && state.page == "/api/follow" && state.query["summary"] == "1") {
+        Column(Modifier.fillMaxSize()) {
+            headerContent()
+            FollowSources(payload, vm, Modifier.weight(1f)) { selectedRecord = it }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            val title = if (state.page in listOf("/api/index", "/api/items")) AppNavigation.title(state.section) ?: endpoint?.title else endpoint?.title
-            Text(title ?: "馆藏", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            payload?.takeIf { (it.has("items") || it.has("groups") || it.has("rows")) && state.query["summary"] != "1" }?.let {
-                val total = (it.opt("total") as? Number)?.toInt()
-                Text(if (total != null) "已显示 ${state.loadedCount} / $total" else "已显示 ${state.loadedCount}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (state.page == "/api/items") IconButton(onClick = { vm.toggleWall() }) { Icon(if (state.wall) Icons.Rounded.ViewList else Icons.Rounded.ViewModule, "切换封面墙") }
-            IconButton(onClick = { vm.refresh() }) { Icon(Icons.Rounded.Refresh, "刷新") }
-        }
-        if (state.error != null) Box(Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) { Notice(state.error, true, "重试", { vm.refresh() }) }
-        if (state.stale) Box(Modifier.padding(horizontal = 18.dp)) { Notice("当前显示上次缓存，操作前请恢复服务器连接。") }
-        if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        if (actions.isNotEmpty() && state.page != "/api/items") androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(actions, key = { it.path }, contentType = { "action_chip" }) { action -> AssistChip(onClick = { chosen = action to payload }, label = { Text(action.title) }) }
-        }
-        if (payload == null && !state.busy) { EmptyState(retry = { vm.refresh() }); return@Column }
-        if (payload != null && state.page == "/api/tasks") { TasksContent(payload, vm, Modifier.weight(1f)); return@Column }
-        if (payload != null && state.page == "/api/follow" && state.query["summary"] == "1") {
-            FollowSources(payload, vm, Modifier.weight(1f)) { selectedRecord = it }; return@Column
-        }
-        val rows = remember(payload) { primaryRows(payload, state.page) }
-        val isCatalog = state.page in listOf("/api/items", "/api/related", "/api/tops", "/api/parts", "/api/editions", "/api/jav/discoveries", "/api/follow", "/api/feeds/discoveries")
-        val isIndex = state.page in listOf("/api/index", "/api/follow/authors")
-        if (rows.isNotEmpty() && (isCatalog || isIndex)) {
+    } else if (isScrollable) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
+        ) {
             val grid = rememberLazyStaggeredGridState()
             val nearEnd by remember(grid, rows.size) { derivedStateOf { (grid.layoutInfo.visibleItemsInfo.maxOfOrNull { it.index } ?: -1) >= rows.size - 8 } }
             LaunchedEffect(nearEnd, state.nextOffset, state.busy, state.moreError, state.stale) {
@@ -160,10 +185,15 @@ import video.peach.android.player.PlaybackViewModel
             LazyVerticalStaggeredGrid(
                 state = grid,
                 columns = StaggeredGridCells.Adaptive(if (state.wall) 128.dp else 148.dp),
-                contentPadding = PaddingValues(18.dp),
+                contentPadding = PaddingValues(
+                    start = 14.dp,
+                    end = 14.dp,
+                    top = with(density) { headerHeightPx.toDp() } + 6.dp,
+                    bottom = 24.dp
+                ),
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalItemSpacing = 12.dp,
-                modifier = Modifier.weight(1f).testTag("catalog-grid")
+                modifier = Modifier.fillMaxSize().testTag("catalog-grid")
             ) {
                 items(
                     items = rows,
@@ -183,8 +213,35 @@ import video.peach.android.player.PlaybackViewModel
                     PagingFooter(state, vm)
                 }
             }
-        } else {
-            LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { if (it.height > 0) headerHeightPx = it.height.toFloat() }
+                    .graphicsLayer { translationY = headerOffsetPx },
+                color = MaterialTheme.colorScheme.background,
+                tonalElevation = if (headerOffsetPx < 0f && headerOffsetPx > -headerHeightPx) 3.dp else 0.dp,
+                shadowElevation = if (headerOffsetPx < 0f && headerOffsetPx > -headerHeightPx) 3.dp else 0.dp
+            ) {
+                headerContent()
+            }
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 18.dp,
+                    end = 18.dp,
+                    top = with(density) { headerHeightPx.toDp() } + 6.dp,
+                    bottom = 24.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 if (state.page == "/api/follow") item(key = "empty_follow", contentType = "empty_state") {
                     EmptyState("暂无关注动态", "可切换到“来源与分组”检查关注来源，或添加来源后检查更新。")
                 } else if (payload != null) item(key = "record_view", contentType = "record_view") {
@@ -196,6 +253,18 @@ import video.peach.android.player.PlaybackViewModel
                 if (state.nextOffset != null) item(key = "paging_footer", contentType = "paging_footer") {
                     PagingFooter(state, vm)
                 }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { if (it.height > 0) headerHeightPx = it.height.toFloat() }
+                    .graphicsLayer { translationY = headerOffsetPx },
+                color = MaterialTheme.colorScheme.background,
+                tonalElevation = if (headerOffsetPx < 0f && headerOffsetPx > -headerHeightPx) 3.dp else 0.dp,
+                shadowElevation = if (headerOffsetPx < 0f && headerOffsetPx > -headerHeightPx) 3.dp else 0.dp
+            ) {
+                headerContent()
             }
         }
     }
@@ -211,6 +280,190 @@ import video.peach.android.player.PlaybackViewModel
         else if (selected.optBoolean("_follow")) vm.client?.let { player.open(it, selected, state.fixedSpeed, state.boost) } else vm.openItem(selected)
     }) }
     if (gallery.isNotEmpty()) Gallery(gallery, vm.client) { gallery = emptyList() }
+}
+
+@Composable
+private fun CatalogHeader(
+    vm: AppViewModel,
+    state: ScreenState,
+    payload: JSONObject?,
+    endpoint: Endpoint?,
+    actions: List<Endpoint>,
+    search: String,
+    onSearchChange: (String) -> Unit,
+    onFilterClick: () -> Unit,
+    onActionClick: (Pair<Endpoint, JSONObject?>) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Rounded.Search,
+                        contentDescription = "搜索",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    BasicTextField(
+                        value = search,
+                        onValueChange = onSearchChange,
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = {
+                            vm.refresh(state.query + ("q" to search) + ("offset" to "0"))
+                        }),
+                        decorationBox = { innerTextField ->
+                            if (search.isEmpty()) {
+                                Text(
+                                    "搜索${endpoint?.title ?: "馆藏"}…",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                    if (search.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                onSearchChange("")
+                                vm.refresh(state.query - "q" + ("offset" to "0"))
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(Icons.Rounded.Close, "清除", modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+            }
+
+            val hasActiveFilter = state.query.keys.any { it !in listOf("offset", "limit") }
+            IconButton(onClick = onFilterClick, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    Icons.Rounded.Tune,
+                    "筛选与排序",
+                    tint = if (hasActiveFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (state.page == "/api/items") {
+                IconButton(onClick = { vm.toggleWall() }, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        if (state.wall) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.ViewModule,
+                        "切换封面墙",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            IconButton(onClick = { vm.refresh() }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Rounded.Refresh, "刷新", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        val chips: List<Triple<String, () -> Unit, Boolean>> = when (state.section) {
+            "jav" -> listOf(
+                Triple("全部馆藏", { vm.navigate("/api/items", mapOf("jav" to "1"), section = "jav") }, state.page == "/api/items"),
+                Triple("发现", { vm.navigate("/api/jav/discoveries", emptyMap(), section = "jav") }, state.page == "/api/jav/discoveries"),
+                Triple("想要", { vm.navigate("/api/wants", emptyMap(), section = "jav") }, state.page == "/api/wants")
+            )
+            "follow" -> listOf(
+                Triple("动态", { vm.navigate("/api/follow", emptyMap(), section = "follow") }, state.page == "/api/follow" && state.query["summary"] != "1"),
+                Triple("创作者", { vm.navigate("/api/follow/authors", emptyMap(), section = "follow") }, state.page == "/api/follow/authors"),
+                Triple("来源与分组", { vm.navigate("/api/follow", mapOf("summary" to "1"), section = "follow") }, state.page == "/api/follow" && state.query["summary"] == "1"),
+                Triple("采集计划", { vm.navigate("/api/follow/schedule", emptyMap(), section = "follow") }, state.page == "/api/follow/schedule")
+            )
+            "home", "performers", "tags", "studios", "flagged" -> listOf(
+                Triple("全部", { vm.select("home") }, state.section == "home"),
+                Triple("艺人", { vm.select("performers") }, state.section == "performers"),
+                Triple("标签", { vm.select("tags") }, state.section == "tags"),
+                Triple("厂牌", { vm.select("studios") }, state.section == "studios"),
+                Triple("已标记", { vm.select("flagged") }, state.section == "flagged")
+            )
+            else -> emptyList()
+        }
+
+        if (chips.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(chips, key = { it.first }, contentType = { "sub_chip" }) { (label, onClick, selected) ->
+                    FilterChip(
+                        selected = selected,
+                        onClick = onClick,
+                        label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.height(30.dp)
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val title = if (state.page in listOf("/api/index", "/api/items")) AppNavigation.title(state.section) ?: endpoint?.title else endpoint?.title
+            Text(
+                text = title ?: "馆藏",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            payload?.takeIf { (it.has("items") || it.has("groups") || it.has("rows")) && state.query["summary"] != "1" }?.let {
+                val total = (it.opt("total") as? Number)?.toInt()
+                Text(
+                    text = if (total != null) "已显示 ${state.loadedCount} / $total" else "已显示 ${state.loadedCount}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (actions.isNotEmpty() && state.page != "/api/items") {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(actions, key = { it.path }, contentType = { "action_chip" }) { action ->
+                    AssistChip(
+                        onClick = { onActionClick(action to payload) },
+                        label = { Text(action.title, style = MaterialTheme.typography.labelSmall) },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.height(28.dp)
+                    )
+                }
+            }
+        }
+
+        if (state.error != null) Box(Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) { Notice(state.error, true, "重试", { vm.refresh() }) }
+        if (state.stale) Box(Modifier.padding(horizontal = 14.dp)) { Notice("当前显示上次缓存，操作前请恢复服务器连接。") }
+        if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp))
+    }
 }
 
 @Composable private fun PagingFooter(state: ScreenState, vm: AppViewModel) {

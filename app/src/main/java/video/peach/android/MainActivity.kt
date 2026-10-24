@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
 import video.peach.android.player.*
 import video.peach.android.ui.*
@@ -125,7 +126,18 @@ private val destinations = listOf(Destination("home", "首页", Icons.Rounded.Vi
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 840.dp
         Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
-            TopAppBar(title = { Column { Text("Peach", style = MaterialTheme.typography.titleLarge); Text(state.connected.name + if (state.connected.url.startsWith("http://")) " · 未加密" else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }, navigationIcon = {
+            TopAppBar(title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Peach", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "· " + state.connected.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+            }, navigationIcon = {
                 if (state.canGoBack) IconButton(onClick = vm::back) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "返回上一层") }
                 else IconButton(onClick = { navigation = true }) { Icon(Icons.Rounded.Menu, "导航菜单") }
             }, actions = {
