@@ -4,6 +4,7 @@
 local.properties
 *.jks
 *.keystore
+secrets/
 captures/
 .idea/
 verification/private/
