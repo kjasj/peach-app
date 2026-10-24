@@ -116,7 +116,7 @@ import video.peach.android.player.PlaybackViewModel
     val isScrollable = (isCatalog || isIndex) && rows.isNotEmpty()
 
     val density = LocalDensity.current
-    var headerHeightPx by remember { mutableFloatStateOf(with(density) { 96.dp.toPx() }) }
+    var headerHeightPx by remember { mutableFloatStateOf(with(density) { 72.dp.toPx() }) }
     var headerOffsetPx by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(state.page, state.section) {
@@ -295,88 +295,143 @@ private fun CatalogHeader(
     onActionClick: (Pair<Endpoint, JSONObject?>) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var searchExpanded by remember(state.page, state.section) { mutableStateOf(search.isNotEmpty()) }
+
     Column(modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        if (searchExpanded) {
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(38.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(1f)
+                        .height(36.dp)
                 ) {
-                    Icon(
-                        Icons.Rounded.Search,
-                        contentDescription = "搜索",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    BasicTextField(
-                        value = search,
-                        onValueChange = onSearchChange,
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            vm.refresh(state.query + ("q" to search) + ("offset" to "0"))
-                        }),
-                        decorationBox = { innerTextField ->
-                            if (search.isEmpty()) {
-                                Text(
-                                    "搜索${endpoint?.title ?: "馆藏"}…",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Rounded.Search,
+                            contentDescription = "搜索",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        BasicTextField(
+                            value = search,
+                            onValueChange = onSearchChange,
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = {
+                                vm.refresh(state.query + ("q" to search) + ("offset" to "0"))
+                            }),
+                            decorationBox = { innerTextField ->
+                                if (search.isEmpty()) {
+                                    Text(
+                                        "搜索${endpoint?.title ?: "馆藏"}…",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                innerTextField()
                             }
-                            innerTextField()
-                        }
-                    )
-                    if (search.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                onSearchChange("")
-                                vm.refresh(state.query - "q" + ("offset" to "0"))
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(Icons.Rounded.Close, "清除", modifier = Modifier.size(16.dp))
+                        )
+                        if (search.isNotEmpty()) {
+                            IconButton(
+                                onClick = {
+                                    onSearchChange("")
+                                    vm.refresh(state.query - "q" + ("offset" to "0"))
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Rounded.Close, "清除", modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
                 }
-            }
 
-            val hasActiveFilter = state.query.keys.any { it !in listOf("offset", "limit") }
-            IconButton(onClick = onFilterClick, modifier = Modifier.size(36.dp)) {
-                Icon(
-                    Icons.Rounded.Tune,
-                    "筛选与排序",
-                    tint = if (hasActiveFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (state.page == "/api/items") {
-                IconButton(onClick = { vm.toggleWall() }, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        if (state.wall) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.ViewModule,
-                        "切换封面墙",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                IconButton(
+                    onClick = {
+                        searchExpanded = false
+                        if (search.isNotEmpty()) {
+                            onSearchChange("")
+                            vm.refresh(state.query - "q" + ("offset" to "0"))
+                        }
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(Icons.Rounded.Close, "收起搜索", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            IconButton(onClick = { vm.refresh() }, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Rounded.Refresh, "刷新", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    val title = if (state.page in listOf("/api/index", "/api/items")) AppNavigation.title(state.section) ?: endpoint?.title else endpoint?.title
+                    Text(
+                        text = title ?: "馆藏",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    payload?.takeIf { (it.has("items") || it.has("groups") || it.has("rows")) && state.query["summary"] != "1" }?.let {
+                        val total = (it.opt("total") as? Number)?.toInt()
+                        Text(
+                            text = if (total != null) "已显示 ${state.loadedCount} / $total" else "已显示 ${state.loadedCount}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = { searchExpanded = true },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Search,
+                        "展开搜索",
+                        tint = if (search.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                val hasActiveFilter = state.query.keys.any { it !in listOf("offset", "limit", "q") }
+                IconButton(onClick = onFilterClick, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        Icons.Rounded.Tune,
+                        "筛选与排序",
+                        tint = if (hasActiveFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (state.page == "/api/items") {
+                    IconButton(onClick = { vm.toggleWall() }, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            if (state.wall) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.ViewModule,
+                            "切换封面墙",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                IconButton(onClick = { vm.refresh() }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Rounded.Refresh, "刷新", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
 
@@ -417,30 +472,6 @@ private fun CatalogHeader(
                         modifier = Modifier.height(30.dp)
                     )
                 }
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val title = if (state.page in listOf("/api/index", "/api/items")) AppNavigation.title(state.section) ?: endpoint?.title else endpoint?.title
-            Text(
-                text = title ?: "馆藏",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            payload?.takeIf { (it.has("items") || it.has("groups") || it.has("rows")) && state.query["summary"] != "1" }?.let {
-                val total = (it.opt("total") as? Number)?.toInt()
-                Text(
-                    text = if (total != null) "已显示 ${state.loadedCount} / $total" else "已显示 ${state.loadedCount}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
 
