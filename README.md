@@ -20,16 +20,26 @@
 安装 JDK 17 或 21、Android SDK Platform 36 / Build Tools，并配置 `ANDROID_HOME` 或本机 `local.properties` 的 `sdk.dir`。不要提交 `local.properties`。
 
 ```sh
-./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease :app:assembleDebug
 ./gradlew :app:testDebugUnitTest :app:lintDebug
-python3 tools/package_debug.py
+python3 tools/package_apk.py
 ```
 
-APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。这是调试签名版本，不作为商店发布签名。首次构建需要下载 Gradle 与 Maven 依赖。
+打包完成后，APK 产物位于 `dist/` 目录：
+- `Peach-Android-<version>.apk`：生产 Release 版本（已签名，体积更小，运行性能最优）。
+- `Peach-Android-<version>-debug.apk`：调试 Debug 版本。
+
+### 签名配置说明
+- **默认回退机制**：若未配置独立的 Release 签名密钥，Gradle 会自动采用内置有效证书进行签名，编译出的 Release APK 保证可直接在 Android 手机上安装与使用。
+- **生产发布签名（可选）**：如需使用正式私钥签名，可在 GitHub 仓库设置以下 Secrets（或配置同名环境变量）：
+  - `KEYSTORE_BASE64`：`.keystore` / `.jks` 文件的 Base64 编码字符串
+  - `KEYSTORE_PASSWORD`：密钥库密码
+  - `KEY_ALIAS`：密钥别名
+  - `KEY_PASSWORD`：私钥密码
 
 项目已配置 GitHub Actions 自动化工作流（`.github/workflows/build-apk.yml`）：
-- **分支推送与 PR**：推送到 `main` 分支时自动执行单元测试与 Lint 静态检查，编译打包并上传为 GitHub Actions 构建产物（Artifact）。
-- **版本发布**：推送以 `v` 开头的版本标签（如 `git tag v0.1.3 && git push origin v0.1.3`）时，会自动创建 GitHub Release 并附带最新的 APK 安装包及 `SHA256SUMS` 校验和文件。
+- **分支推送与 PR**：推送到 `main` 分支时自动执行单元测试与 Lint 静态检查，编译打包 Release & Debug APK 并上传为 GitHub Actions 构建产物（Artifact）。
+- **版本发布**：推送以 `v` 开头的版本标签（如 `git tag v0.1.3 && git push origin v0.1.3`）时，会自动创建 GitHub Release 并附带最新的 Release / Debug 安装包及 `SHA256SUMS` 校验和文件。
 - **手动打包**：支持在 GitHub 仓库 Actions 页面一键点击 `workflow_dispatch` 手动触发打包与按需发布。
 
 ## 联调与测试
