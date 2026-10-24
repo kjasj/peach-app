@@ -1,0 +1,15 @@
+Pixel_3a_API_33_arm64-v8a(AVD) - 13: 13 tests passed, 1 skipped, 0 failed
+Passed tests:
+  - unavailableReportsServerFileFailureAndCanBeClosed
+  - tagWorksAndStudioDetailsReturnToTheirParentWithoutFinishingActivity
+  - scrapedCoverCropUsesRightPanelAndJavShowsPortraitArtwork
+  - followAndManagementShowBusinessContentInsteadOfMachineMetadata
+  - normalRangeVideoStillPlaysWithDecoderFallbackEnabled
+  - deepCatalogPositionSurvivesDetailAndBack
+  - scrollsAll435ItemsAndKeepsLoadedRowsWhenNextPageFails
+  - menuUsesWebsiteEntriesAndArtistOpensMatchingWorks
+  - actualHlsPlaysAndCancellationIsAccepted
+  - organizePreviewIsReviewableAndSeedsConfirmationForm
+  - realTouchHoldRestoresSpeedAndDoesNotReplacePlayer
+  - localSubtitleTrackCanBeSelectedAndStyled
+  - systemPictureInPictureKeepsPlaybackSession

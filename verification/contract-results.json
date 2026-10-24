@@ -376,19 +376,19 @@
     },
     {
       "name": "播放计划",
-      "path": "/api/stream-plan?id=1&session=52b018ca-f329-429d-bd39-8c4a8d171df6-range",
+      "path": "/api/stream-plan?id=1&session=b385266a-4036-4674-a7a3-d05b6801eca7-range",
       "method": "GET",
       "passed": true
     },
     {
       "name": "HLS 播放计划",
-      "path": "/api/stream-plan?id=4&session=52b018ca-f329-429d-bd39-8c4a8d171df6&mode=hls",
+      "path": "/api/stream-plan?id=4&session=b385266a-4036-4674-a7a3-d05b6801eca7&mode=hls",
       "method": "GET",
       "passed": true
     },
     {
       "name": "取消播放会话",
-      "path": "/api/stream-cancel?session=52b018ca-f329-429d-bd39-8c4a8d171df6",
+      "path": "/api/stream-cancel?session=b385266a-4036-4674-a7a3-d05b6801eca7",
       "method": "POST",
       "passed": true
     }

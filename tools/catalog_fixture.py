@@ -28,6 +28,7 @@ class Handler(BaseHTTPRequestHandler):
         if url.path=='/api/libraries': return self.send(200,{'libraries':[]})
         if url.path=='/api/items':
             offset=int(q.get('offset',['0'])[0]); limit=int(q.get('limit',['60'])[0])
+            if offset == 0: failed = False
             if offset==120 and not failed:
                 failed=True
                 return self.send(503,{'error':'合成测试：下一页暂时不可用'})

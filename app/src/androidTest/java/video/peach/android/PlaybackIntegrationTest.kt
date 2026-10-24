@@ -41,13 +41,15 @@ class PlaybackIntegrationTest {
         assumeTrue("仅在隔离测试服务运行", args.getString("peachFixture") == "true")
         val base = args.getString("peachBase") ?: "http://127.0.0.1:18901"
         require(android.net.Uri.parse(base).host in listOf("127.0.0.1", "localhost"))
-        val app = ui.activity.application as PeachApplication
-        client = PeachClient(ServerProfile("instrumentation-fixture", "合成测试", base), app.secrets)
-        client.login("android-fixture", 0)
-        ui.runOnUiThread { playback = ViewModelProvider(ui.activity)[PlaybackViewModel::class.java] }
-        ui.waitUntil(15000) { ViewModelProvider(ui.activity)[AppViewModel::class.java].state.value.connected != null }
+        val vm = ViewModelProvider(ui.activity)[AppViewModel::class.java]
+        ui.waitUntil(10000) { vm.state.value.ready }
+        ui.runOnUiThread {
+            playback = ViewModelProvider(ui.activity)[PlaybackViewModel::class.java]
+            vm.connect(ServerProfile("instrumentation-fixture", "合成测试", base), "android-fixture")
+        }
+        ui.waitUntil(15000) { vm.state.value.connected != null && !vm.state.value.busy }
         ui.waitForIdle()
-        val connected = ViewModelProvider(ui.activity)[AppViewModel::class.java].client!!
+        val connected = vm.client!!
         require(connected.base.toString() == PeachClient.normalizeAddress(base)) { "拒绝在非指定合成服务上运行写入测试" }
         client = connected
         val catalog = client.get("/api/items", mapOf("limit" to "200"))

@@ -1,0 +1,402 @@
+{
+  "results": [
+    {
+      "name": "馆藏列表",
+      "path": "/api/items",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "分页",
+      "path": "/api/items?limit=1&offset=1",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "搜索",
+      "path": "/api/items?q=TEST-001",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "作品详情",
+      "path": "/api/item?id=1",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 libraries",
+      "path": "/api/libraries",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 providers",
+      "path": "/api/providers",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 sources",
+      "path": "/api/sources",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 facets",
+      "path": "/api/facets",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 tasks",
+      "path": "/api/tasks",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 downloads",
+      "path": "/api/downloads",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 folders",
+      "path": "/api/folders",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 playlists",
+      "path": "/api/playlists",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 feeds",
+      "path": "/api/feeds",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 feeds/check",
+      "path": "/api/feeds/check",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 feeds/discoveries",
+      "path": "/api/feeds/discoveries",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 follow",
+      "path": "/api/follow",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 follow/credentials",
+      "path": "/api/follow/credentials",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 follow/tags",
+      "path": "/api/follow/tags",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 follow/authors",
+      "path": "/api/follow/authors",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 follow/schedule",
+      "path": "/api/follow/schedule",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 follow/check",
+      "path": "/api/follow/check",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 settings",
+      "path": "/api/settings",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 library-shortcuts",
+      "path": "/api/library-shortcuts",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 stats",
+      "path": "/api/stats",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 taste",
+      "path": "/api/taste",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 taste/refresh",
+      "path": "/api/taste/refresh",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 library-processing",
+      "path": "/api/library-processing",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 media-processing",
+      "path": "/api/media-processing",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 thumbnail-jobs",
+      "path": "/api/thumbnail-jobs",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 media-repair",
+      "path": "/api/media-repair",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 orphan-records",
+      "path": "/api/orphan-records",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 organize",
+      "path": "/api/organize",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 duplicates",
+      "path": "/api/duplicates",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 ads",
+      "path": "/api/ads",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 quality-goals",
+      "path": "/api/quality-goals",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 wants",
+      "path": "/api/wants",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 search-history",
+      "path": "/api/search-history",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 custom-metadata",
+      "path": "/api/custom-metadata",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 scraping",
+      "path": "/api/scraping",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 scraping/cover",
+      "path": "/api/scraping/cover",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 links/prune",
+      "path": "/api/links/prune",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 resource-sync/apply",
+      "path": "/api/resource-sync/apply",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 review",
+      "path": "/api/review",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 post-setup-tutorial",
+      "path": "/api/post-setup-tutorial",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 related",
+      "path": "/api/related?id=1",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 parts",
+      "path": "/api/parts?id=5",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "读取 timeline",
+      "path": "/api/timeline?id=1",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "没有版本分组时给出原因",
+      "path": "/api/editions?id=1",
+      "method": "GET",
+      "passed": true,
+      "evidence": "预期拒绝，无分组或缺少任务参数"
+    },
+    {
+      "name": "缺少任务参数时拒绝",
+      "path": "/api/library-processing/issues",
+      "method": "GET",
+      "passed": true,
+      "evidence": "预期拒绝，无分组或缺少任务参数"
+    },
+    {
+      "name": "本地字幕",
+      "path": "/api/assets/1/subtitles",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "喜欢",
+      "path": "/api/preference",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "评分",
+      "path": "/api/feedback",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "稍后看",
+      "path": "/api/watch-later",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "画质目标",
+      "path": "/api/quality-goal",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "播放计数",
+      "path": "/api/play",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "观看累计",
+      "path": "/api/activity",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "创建列表",
+      "path": "/api/playlist",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "读取列表",
+      "path": "/api/playlist?id=1",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "重命名列表",
+      "path": "/api/playlist",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "删除测试列表",
+      "path": "/api/playlist",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "保存业务偏好",
+      "path": "/api/settings",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "来源凭据撤销空白测试",
+      "path": "/api/follow/credential",
+      "method": "POST",
+      "passed": true
+    },
+    {
+      "name": "播放计划",
+      "path": "/api/stream-plan?id=1&session=b385266a-4036-4674-a7a3-d05b6801eca7-range",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "HLS 播放计划",
+      "path": "/api/stream-plan?id=4&session=b385266a-4036-4674-a7a3-d05b6801eca7&mode=hls",
+      "method": "GET",
+      "passed": true
+    },
+    {
+      "name": "取消播放会话",
+      "path": "/api/stream-cancel?session=b385266a-4036-4674-a7a3-d05b6801eca7",
+      "method": "POST",
+      "passed": true
+    }
+  ],
+  "passed": 65,
+  "failed": 0,
+  "limitations": [
+    "外部来源、网盘账号和真实设备未由此脚本验证",
+    "本次只验证合成数据上的指定行为，不代表全部功能通过"
+  ]
+}
