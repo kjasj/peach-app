@@ -18,6 +18,7 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
+import androidx.media3.ui.AspectRatioFrameLayout
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,18 @@ import video.peach.android.data.*
 import java.io.File
 import java.util.UUID
 
+data class AudioTrackChoice(
+    val id: String,
+    val label: String,
+    val language: String,
+    val channels: Int,
+    val mimeType: String,
+    val selected: Boolean,
+    val groupIndex: Int,
+    val trackIndex: Int
+)
+
+@androidx.annotation.OptIn(UnstableApi::class)
 data class PlayingState(
     val item: JSONObject? = null, val loading: Boolean = false, val error: String? = null, val fatalError: Boolean = false,
     val position: Long = 0, val duration: Long = 0, val buffered: Long = 0, val playing: Boolean = false,
@@ -40,7 +53,9 @@ data class PlayingState(
     val subtitleEdge: Int = 1, val subtitleFont: String = "sans-serif",
     val subtitles: List<JSONObject> = emptyList(), val qualities: List<JSONObject> = emptyList(),
     val editions: List<JSONObject> = emptyList(), val parts: List<JSONObject> = emptyList(), val subtitleLabel: String = "关闭字幕", val timeline: JSONObject? = null,
-    val fastSeek: Boolean = true, val direct: Boolean = true
+    val fastSeek: Boolean = true, val direct: Boolean = true,
+    val resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
+    val audioTracks: List<AudioTrackChoice> = emptyList()
 )
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -132,12 +147,16 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
                 mutable.update { it.copy(loading = false, fatalError = true, error = "$message\n诊断编号：${error.errorCode}") }
                 releaseGesture()
             }
+            override fun onTracksChanged(tracks: Tracks) {
+                updateAudioTracks(tracks)
+            }
         })
         load = viewModelScope.launch {
             try {
                 val isFastSeek = app.preferences.get("fastSeek", "true") == "true"
+                val savedResize = app.preferences.get("resizeMode", "0").toIntOrNull() ?: AspectRatioFrameLayout.RESIZE_MODE_FIT
                 exo.setSeekParameters(if (isFastSeek) SeekParameters.CLOSEST_SYNC else SeekParameters.EXACT)
-                mutable.update { it.copy(fastSeek = isFastSeek,
+                mutable.update { it.copy(fastSeek = isFastSeek, resizeMode = savedResize,
                     subtitleSize = app.preferences.get("subtitleSize", "22").toFloatOrNull() ?: 22f,
                     subtitleColor = app.preferences.get("subtitleColor", "-1").toIntOrNull() ?: -1,
                     subtitleBackground = app.preferences.get("subtitleBackground", "-1728053248").toIntOrNull() ?: 0x99000000.toInt(),
@@ -304,6 +323,74 @@ class PlaybackViewModel(application: Application) : AndroidViewModel(application
     fun subtitleStyle(size: Float = mutable.value.subtitleSize, color: Int = mutable.value.subtitleColor, background: Int = mutable.value.subtitleBackground, edge: Int = mutable.value.subtitleEdge, font: String = mutable.value.subtitleFont) {
         mutable.update { it.copy(subtitleSize = size, subtitleColor = color, subtitleBackground = background, subtitleEdge = edge, subtitleFont = font) }
         viewModelScope.launch { app.preferences.put("subtitleSize", size.toString()); app.preferences.put("subtitleColor", color.toString()); app.preferences.put("subtitleBackground", background.toString()); app.preferences.put("subtitleEdge", edge.toString()); app.preferences.put("subtitleFont", font) }
+    }
+    fun cycleResizeMode(): String {
+        val next = when (mutable.value.resizeMode) {
+            AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+        }
+        mutable.update { it.copy(resizeMode = next) }
+        viewModelScope.launch { app.preferences.put("resizeMode", next.toString()) }
+        return resizeModeLabel(next)
+    }
+    fun setResizeMode(mode: Int) {
+        mutable.update { it.copy(resizeMode = mode) }
+        viewModelScope.launch { app.preferences.put("resizeMode", mode.toString()) }
+    }
+    fun resizeModeLabel(mode: Int = mutable.value.resizeMode): String = when (mode) {
+        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "裁剪铺满 (Crop)"
+        AspectRatioFrameLayout.RESIZE_MODE_FILL -> "拉伸全屏 (Fill)"
+        else -> "适应屏幕 (Fit)"
+    }
+    private fun updateAudioTracks(tracks: Tracks) {
+        val list = mutableListOf<AudioTrackChoice>()
+        for ((groupIdx, group) in tracks.groups.withIndex()) {
+            if (group.type == C.TRACK_TYPE_AUDIO) {
+                for (i in 0 until group.length) {
+                    if (group.isTrackSupported(i)) {
+                        val format = group.getTrackFormat(i)
+                        val lang = format.language?.takeIf { it.isNotBlank() && it != "und" } ?: ""
+                        val name = format.label?.takeIf { it.isNotBlank() }
+                            ?: (if (lang.isNotBlank()) java.util.Locale.forLanguageTag(lang).getDisplayLanguage(java.util.Locale.CHINESE).ifBlank { lang } else "音轨 ${list.size + 1}")
+                        val details = buildString {
+                            append(name)
+                            if (format.channelCount > 0) {
+                                append(when (format.channelCount) {
+                                    1 -> " · 单声道"
+                                    2 -> " · 立体声"
+                                    6 -> " · 5.1声道"
+                                    8 -> " · 7.1声道"
+                                    else -> " · ${format.channelCount}声道"
+                                })
+                            }
+                            format.sampleMimeType?.substringAfterLast('/')?.uppercase()?.takeIf { it.isNotBlank() }?.let {
+                                append(" ($it)")
+                            }
+                        }
+                        list.add(AudioTrackChoice(
+                            id = "${groupIdx}_$i",
+                            label = details,
+                            language = lang,
+                            channels = format.channelCount,
+                            mimeType = format.sampleMimeType.orEmpty(),
+                            selected = group.isTrackSelected(i),
+                            groupIndex = groupIdx,
+                            trackIndex = i
+                        ))
+                    }
+                }
+            }
+        }
+        mutable.update { it.copy(audioTracks = list) }
+    }
+    fun selectAudioTrack(track: AudioTrackChoice) {
+        val exo = player ?: return
+        val targetGroup = exo.currentTracks.groups.getOrNull(track.groupIndex) ?: return
+        val override = TrackSelectionOverride(targetGroup.mediaTrackGroup, track.trackIndex)
+        exo.trackSelectionParameters = exo.trackSelectionParameters.buildUpon()
+            .setOverrideForType(override)
+            .build()
     }
     private fun flush(ended: Boolean) {
         val item = mutable.value.item ?: return

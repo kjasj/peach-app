@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.launch
@@ -59,7 +60,22 @@ class PlaybackGestureView(context: Context) : View(context) {
     private val detector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent) = true
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean { if (!moved && !held) performClick(); return true }
-        override fun onDoubleTap(e: MotionEvent): Boolean { handler.removeCallbacks(hold); controller?.releaseGesture(); controller?.toggle(); return true }
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            handler.removeCallbacks(hold)
+            controller?.releaseGesture()
+            val target = controller ?: return true
+            val currentPos = target.player?.currentPosition ?: 0L
+            if (e.x < width * 0.35f) {
+                target.seek(currentPos - 10000)
+                onHint("快退 10 秒 ⏪")
+            } else if (e.x > width * 0.65f) {
+                target.seek(currentPos + 10000)
+                onHint("快进 10 秒 ⏩")
+            } else {
+                target.toggle()
+            }
+            return true
+        }
     }).apply { setIsLongpressEnabled(false) }
     init { isClickable = true; contentDescription = "视频画面，激活显示或隐藏控制栏" }
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -141,8 +157,9 @@ class PlaybackGestureView(context: Context) : View(context) {
         }
     }
     Box(modifier.background(Color.Black)) {
-        AndroidView(factory = { activityContext -> PlayerView(activityContext).apply { useController = false; keepScreenOn = true; player = vm.player } }, update = { view ->
+        AndroidView(factory = { activityContext -> PlayerView(activityContext).apply { useController = false; keepScreenOn = true; player = vm.player; resizeMode = state.resizeMode } }, update = { view ->
             view.player = vm.player
+            view.resizeMode = state.resizeMode
             view.subtitleView?.apply {
                 setApplyEmbeddedStyles(false); setApplyEmbeddedFontSizes(false); setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, state.subtitleSize)
                 setStyle(CaptionStyleCompat(state.subtitleColor, state.subtitleBackground, android.graphics.Color.TRANSPARENT,
@@ -185,6 +202,7 @@ class PlaybackGestureView(context: Context) : View(context) {
                     IconButton(onClick = vm::lock) { Icon(Icons.Rounded.LockOpen, "锁定手势", tint = Color.White) }
                     TextButton(onClick = { menu = "subtitles" }, Modifier.weight(1f)) { Text(state.subtitleLabel, color = Color.White, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) }
                     TextButton(onClick = { menu = "versions" }) { Text("选集", color = Color.White) }
+                    IconButton(onClick = { hint = vm.cycleResizeMode() }) { Icon(Icons.Rounded.AspectRatio, "切换画面比例", tint = Color.White) }
                     IconButton(onClick = onPip) { Icon(Icons.Rounded.PictureInPicture, "系统画中画", tint = Color.White) }
                     IconButton(onClick = { vm.full(!state.full) }) { Icon(if (state.full) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen, "切换全屏", tint = Color.White) }
                 }
@@ -206,6 +224,24 @@ class PlaybackGestureView(context: Context) : View(context) {
                 FilterChip(selected = !state.fastSeek, onClick = { vm.setFastSeek(false) }, label = { Text("逐帧精准定位") })
             }
             Text(if (state.fastSeek) "快进直接对齐最近关键帧，跳过中间帧解码，消除高码率卡顿。" else "精确定位到所选时间点，需要解码关键帧至目标点之间的全部帧。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("画面比例 · ${vm.resizeModeLabel(state.resizeMode)}")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = state.resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FIT, onClick = { vm.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT) }, label = { Text("适应屏幕 (Fit)") })
+                FilterChip(selected = state.resizeMode == AspectRatioFrameLayout.RESIZE_MODE_ZOOM, onClick = { vm.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_ZOOM) }, label = { Text("裁剪铺满 (Crop)") })
+                FilterChip(selected = state.resizeMode == AspectRatioFrameLayout.RESIZE_MODE_FILL, onClick = { vm.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL) }, label = { Text("拉伸全屏 (Fill)") })
+            }
+            if (state.audioTracks.size > 1) {
+                Text("音频音轨 · ${state.audioTracks.firstOrNull { it.selected }?.label ?: "默认"}")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    state.audioTracks.forEach { track ->
+                        FilterChip(
+                            selected = track.selected,
+                            onClick = { vm.selectAudioTrack(track) },
+                            label = { Text(track.label) }
+                        )
+                    }
+                }
+            }
             if (state.item?.let { !vm.isFollow(it) } == true) {
                 if (state.direct) {
                     OutlinedButton(onClick = { vm.compatibility(); settings = false }, Modifier.fillMaxWidth()) { Text("切换 HLS 转码兼容播放") }

@@ -55,10 +55,10 @@ class SecretStore(context: Context) : SessionStorage {
         }
     }
     @Synchronized override fun write(name: String, value: String) {
-        if (value.isEmpty()) { storage.edit().remove(name).commit(); return }
+        if (value.isEmpty()) { storage.edit().remove(name).apply(); return }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, key()) }
         val encoded = Base64.encodeToString(cipher.iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8)), Base64.NO_WRAP)
-        check(storage.edit().putString(name, encoded).commit()) { "无法保存登录会话" }
+        storage.edit().putString(name, encoded).apply()
     }
     @Synchronized override fun read(name: String): String = runCatching {
         val data = Base64.decode(storage.getString(name, null) ?: return "", Base64.NO_WRAP)

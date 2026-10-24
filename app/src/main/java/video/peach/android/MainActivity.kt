@@ -45,7 +45,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val state by app.state.collectAsStateWithLifecycle()
             val playing by playback.state.collectAsStateWithLifecycle()
-            val images = remember(state.connected?.id) { coil.ImageLoader.Builder(this).apply { app.client?.let { okHttpClient(it.readHttp) } }.build() }
+            val images = remember(state.connected?.id) {
+                coil.ImageLoader.Builder(this)
+                    .apply { app.client?.let { okHttpClient(it.readHttp) } }
+                    .diskCache { coil.disk.DiskCache.Builder().directory(cacheDir.resolve("image_cache")).maxSizeBytes(250L * 1024 * 1024).build() }
+                    .memoryCache { coil.memory.MemoryCache.Builder(this).maxSizePercent(0.25).build() }
+                    .respectCacheHeaders(false)
+                    .build()
+            }
             DisposableEffect(images) { onDispose { images.shutdown() } }
             CompositionLocalProvider(LocalPeachImages provides images) { PeachTheme(state.theme) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -54,6 +61,14 @@ class MainActivity : ComponentActivity() {
             } }
             LaunchedEffect(playing.full) {
                 requestedOrientation = if (playing.full) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    window.attributes = window.attributes.apply {
+                        layoutInDisplayCutoutMode = if (playing.full)
+                            android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        else
+                            android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                    }
+                }
                 val controller = WindowCompat.getInsetsController(window, window.decorView)
                 if (playing.full) { controller.hide(WindowInsetsCompat.Type.systemBars()); controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE }
                 else controller.show(WindowInsetsCompat.Type.systemBars())
