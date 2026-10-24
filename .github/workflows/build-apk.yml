@@ -55,7 +55,7 @@ jobs:
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             mkdir -p "$RUNNER_TEMP/keystore"
-            python3 -c "import os, base64; open(os.environ['RUNNER_TEMP'] + '/keystore/release.keystore', 'wb').write(base64.b64decode(os.environ['KEYSTORE_BASE64'].strip()))"
+            python3 -c "import os, base64; s = ''.join(os.environ.get('KEYSTORE_BASE64', '').split()); s += '=' * ((4 - len(s) % 4) % 4); open(os.environ['RUNNER_TEMP'] + '/keystore/release.keystore', 'wb').write(base64.b64decode(s))"
             echo "KEYSTORE_PATH=$RUNNER_TEMP/keystore/release.keystore" >> "$GITHUB_ENV"
             echo "已成功加载正式 Release 签名密钥"
           else
