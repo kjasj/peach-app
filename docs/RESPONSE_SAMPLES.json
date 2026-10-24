@@ -1,0 +1,413 @@
+{
+  "scope": "仅隔离合成数据；示例字段不是所有端点的通用响应契约",
+  "samples": [
+    {
+      "method": "GET",
+      "request": "/healthz",
+      "response": {
+        "ok": true,
+        "service": "peach-api",
+        "version": "0.46.1",
+        "checks": {
+          "database": {
+            "status": "ok",
+            "reason": "数据库可读取"
+          },
+          "schema": {
+            "status": "ok",
+            "reason": "迁移校验通过"
+          },
+          "configured": {
+            "status": "ok",
+            "reason": "配置可读取"
+          },
+          "media_mounts": {
+            "status": "warning",
+            "reason": "CloudDrive · 115：未配置挂载点；CloudDrive · PikPak：未配置挂载点"
+          },
+          "security": {
+            "status": "ok",
+            "reason": "已开启访问密码"
+          },
+          "ffmpeg": {
+            "status": "ok",
+            "reason": "工具路径已找到"
+          }
+        },
+        "build_commit": null,
+        "configured": true,
+        "configurable": false,
+        "db": "available",
+        "ffmpeg": "path",
+        "media_mounts": {
+          "state": "degraded",
+          "sources": [
+            {
+              "location": "local",
+              "label": "本地磁盘",
+              "online": true,
+              "state": "ok",
+              "message": "",
+              "checked_at": 1792793373.9106188
+            },
+            {
+              "location": "115",
+              "label": "CloudDrive · 115",
+              "online": false,
+              "state": "unmapped",
+              "message": "CloudDrive · 115：未配置挂载点",
+              "checked_at": null
+            },
+            {
+              "location": "pikpak",
+              "label": "CloudDrive · PikPak",
+              "online": false,
+              "state": "unmapped",
+              "message": "CloudDrive · PikPak：未配置挂载点",
+              "checked_at": null
+            }
+          ],
+          "warnings": [
+            "CloudDrive · 115：未配置挂载点",
+            "CloudDrive · PikPak：未配置挂载点"
+          ]
+        },
+        "mdns": "disabled",
+        "mdns_backend": null,
+        "mdns_service": null,
+        "mdns_service_host": null,
+        "mdns_address": null,
+        "ledger_sync": "disabled",
+        "ledger_read_only": false,
+        "ledger_read_only_message": null,
+        "ledger_writer_origin": null,
+        "scheme": "http",
+        "attention": [],
+        "tunnel": {
+          "enabled": false,
+          "state": "stopped"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "request": "/api/items?q=TEST-001&limit=1",
+      "response": {
+        "total": 1,
+        "work_total": 1,
+        "bytes": 4070680,
+        "items": [
+          {
+            "id": 1,
+            "location": "local",
+            "name": "TEST-001.mp4",
+            "catalog_title": null,
+            "original_title": null,
+            "medium": "video",
+            "creator": null,
+            "studio": null,
+            "code": null,
+            "release_date": null,
+            "size": 4070680,
+            "duration": 18.0,
+            "width": 640,
+            "height": 360,
+            "ctx_length": null,
+            "ctx_orient": null,
+            "play_count": 28,
+            "leave_ratio": 0.08661111111111111,
+            "feedback": null,
+            "disposal": null,
+            "disposal_reason": null,
+            "rating": 4,
+            "o_count": null,
+            "play_seconds": 96.20899999999999,
+            "max_reached": 1.0,
+            "seek_count": 13,
+            "region": "",
+            "effective_region": "",
+            "watch_later": 1,
+            "tags": [],
+            "performers": [],
+            "performer_entities": [],
+            "creator_entity": null,
+            "performer_total": 0,
+            "cost": "free",
+            "has_thumb": true,
+            "has_local_poster": false,
+            "has_cover": false,
+            "cover_key": "",
+            "region_label": "",
+            "region_settled": false,
+            "is_jav": false
+          }
+        ],
+        "has_more": null
+      }
+    },
+    {
+      "method": "GET",
+      "request": "/api/item?id=1",
+      "response": {
+        "id": 1,
+        "location": "local",
+        "name": "TEST-001.mp4",
+        "catalog_title": null,
+        "original_title": null,
+        "creator": null,
+        "studio": null,
+        "code": null,
+        "release_date": null,
+        "size": 4070680,
+        "duration": 18.0,
+        "width": 640,
+        "height": 360,
+        "field_owners": {},
+        "mutation_revision": 0,
+        "ctx_length": null,
+        "ctx_orient": null,
+        "play_count": 28,
+        "leave_ratio": 0.08661111111111111,
+        "feedback": null,
+        "disposal": null,
+        "disposal_reason": null,
+        "rating": 4,
+        "o_count": null,
+        "play_seconds": 96.20899999999999,
+        "max_reached": 1.0,
+        "seek_count": 13,
+        "region": "",
+        "effective_region": "",
+        "liked": 1,
+        "like_reason": "合成测试",
+        "better_version": 1,
+        "better_version_reason": "合成测试",
+        "watch_later": 1,
+        "sample_images": [],
+        "tags": [],
+        "performers": [],
+        "entities": {
+          "creator": [],
+          "performer": [],
+          "studio": [],
+          "series": []
+        },
+        "entity_refs": {
+          "creator": [],
+          "performer": [],
+          "studio": [],
+          "series": []
+        },
+        "cost": "free",
+        "has_thumb": true,
+        "has_local_poster": false,
+        "has_cover": false,
+        "cover_key": "",
+        "has_studio_logo": false,
+        "studio_logo_version": "",
+        "region_label": "",
+        "region_settled": false,
+        "is_jav": false
+      }
+    },
+    {
+      "method": "GET",
+      "request": "/api/parts?id=5",
+      "response": {
+        "title": "TEST-010",
+        "count": 2,
+        "items": [
+          {
+            "id": 5,
+            "location": "local",
+            "name": "TEST-010-CD1.mp4",
+            "catalog_title": null,
+            "original_title": null,
+            "creator": null,
+            "studio": null,
+            "code": "TEST-010",
+            "release_date": null,
+            "size": 4070680,
+            "duration": 15.0,
+            "width": 640,
+            "height": 360,
+            "field_owners": {},
+            "mutation_revision": 0,
+            "ctx_length": null,
+            "ctx_orient": null,
+            "play_count": 0,
+            "leave_ratio": null,
+            "feedback": null,
+            "disposal": null,
+            "disposal_reason": null,
+            "rating": null,
+            "o_count": null,
+            "play_seconds": null,
+            "max_reached": null,
+            "seek_count": null,
+            "region": "",
+            "effective_region": "",
+            "liked": 0,
+            "like_reason": "",
+            "better_version": 0,
+            "better_version_reason": "",
+            "watch_later": 0,
+            "sample_images": [],
+            "tags": [],
+            "performers": [],
+            "entities": {
+              "creator": [],
+              "performer": [],
+              "studio": [],
+              "series": []
+            },
+            "entity_refs": {
+              "creator": [],
+              "performer": [],
+              "studio": [],
+              "series": []
+            },
+            "cost": "free",
+            "has_thumb": true,
+            "has_local_poster": false,
+            "has_cover": false,
+            "cover_key": "",
+            "has_studio_logo": false,
+            "studio_logo_version": "",
+            "region_label": "",
+            "region_settled": false,
+            "is_jav": false,
+            "part_group": {
+              "key": "TEST-010",
+              "title": "TEST-010",
+              "count": 2,
+              "seed_id": 5,
+              "item_ids": [
+                5,
+                6
+              ],
+              "total_duration": 30.0,
+              "total_size": 4216691
+            },
+            "part_label": "1"
+          },
+          {
+            "id": 6,
+            "location": "local",
+            "name": "TEST-010-CD2.mp4",
+            "catalog_title": null,
+            "original_title": null,
+            "creator": null,
+            "studio": null,
+            "code": "TEST-010",
+            "release_date": null,
+            "size": 146011,
+            "duration": 15.0,
+            "width": 640,
+            "height": 360,
+            "field_owners": {},
+            "mutation_revision": 0,
+            "ctx_length": null,
+            "ctx_orient": null,
+            "play_count": 0,
+            "leave_ratio": null,
+            "feedback": null,
+            "disposal": null,
+            "disposal_reason": null,
+            "rating": null,
+            "o_count": null,
+            "play_seconds": null,
+            "max_reached": null,
+            "seek_count": null,
+            "region": "",
+            "effective_region": "",
+            "liked": 0,
+            "like_reason": "",
+            "better_version": 0,
+            "better_version_reason": "",
+            "watch_later": 0,
+            "sample_images": [],
+            "tags": [],
+            "performers": [],
+            "entities": {
+              "creator": [],
+              "performer": [],
+              "studio": [],
+              "series": []
+            },
+            "entity_refs": {
+              "creator": [],
+              "performer": [],
+              "studio": [],
+              "series": []
+            },
+            "cost": "free",
+            "has_thumb": true,
+            "has_local_poster": false,
+            "has_cover": false,
+            "cover_key": "",
+            "has_studio_logo": false,
+            "studio_logo_version": "",
+            "region_label": "",
+            "region_settled": false,
+            "is_jav": false,
+            "part_group": {
+              "key": "TEST-010",
+              "title": "TEST-010",
+              "count": 2,
+              "seed_id": 5,
+              "item_ids": [
+                5,
+                6
+              ],
+              "total_duration": 30.0,
+              "total_size": 4216691
+            },
+            "part_label": "2"
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "request": "/api/assets/1/subtitles",
+      "response": {
+        "id": 1,
+        "subtitles": [
+          {
+            "index": 0,
+            "name": "TEST-001.zh.vtt",
+            "format": "vtt",
+            "language": "zh",
+            "label": "中文",
+            "pairing": "suffix",
+            "note": "",
+            "playable": true,
+            "src": "/api/assets/1/subtitles/0"
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "request": "/api/library-processing",
+      "response": {
+        "status": "idle",
+        "speed_mode": "standard",
+        "metadata_only": false
+      }
+    },
+    {
+      "method": "GET",
+      "request": "/api/stream-plan?id=1&session=<new-session-uuid>",
+      "response": {
+        "id": 1,
+        "protocol": "range",
+        "mime_type": "video/mp4",
+        "duration": 18.0,
+        "src": "/stream?id=1&session=<new-session-uuid>",
+        "reason": "standard-http-range"
+      }
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "total": 435,
+  "unique_loaded": 435,
+  "complete": true,
+  "pages": [
+    {
+      "offset": 0,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 60,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 120,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 180,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 240,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 300,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 360,
+      "received": 60,
+      "has_more": null
+    },
+    {
+      "offset": 420,
+      "received": 15,
+      "has_more": null
+    }
+  ],
+  "indices": [
+    {
+      "kind": "performers",
+      "rows": 21,
+      "has_more": false,
+      "ok": true
+    },
+    {
+      "kind": "tags",
+      "rows": 60,
+      "has_more": true,
+      "ok": true
+    },
+    {
+      "kind": "studios",
+      "rows": 6,
+      "has_more": false,
+      "ok": true
+    }
+  ],
+  "scope": "真实服务只读；仅输出数量，无作品、人物名称或凭据"
+}

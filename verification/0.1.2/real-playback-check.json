@@ -1,0 +1,9 @@
+{
+  "scope": "用户指定样本只读排查，无作品名、地址、口令或路径",
+  "catalog": 200,
+  "item": 200,
+  "stream_plan": 404,
+  "error": "unavailable",
+  "source_online": true,
+  "resolved": false
+}

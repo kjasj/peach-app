@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="video.peach.android.PeachClientTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-23T22:11:41" hostname="local-test" time="0.423">
+  <properties/>
+  <testcase name="privateCaDoesNotDisableHostnameValidation" classname="video.peach.android.PeachClientTest" time="0.391"/>
+  <testcase name="writesAreNotRetriedOnConflict" classname="video.peach.android.PeachClientTest" time="0.008"/>
+  <testcase name="login303AndAuthenticatedMutation" classname="video.peach.android.PeachClientTest" time="0.012"/>
+  <testcase name="rejectsCredentialsAndUntrustedResourceOrigins" classname="video.peach.android.PeachClientTest" time="0.001"/>
+  <testcase name="businessErrorInSuccessfulHttpResponseIsStillAFailedWrite" classname="video.peach.android.PeachClientTest" time="0.004"/>
+  <testcase name="cookiesNeverCrossServerPorts" classname="video.peach.android.PeachClientTest" time="0.006"/>
+  <testcase name="errorSemanticsAndFieldValidation" classname="video.peach.android.PeachClientTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

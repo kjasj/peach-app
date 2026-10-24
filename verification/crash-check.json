@@ -1,0 +1,6 @@
+{
+  "emulator_crash_buffer_empty": false,
+  "observed_exception_owner": "Android uiautomator dump tool",
+  "peach_runtime_crash_observed": false,
+  "note": "UI 树导出工具出现一次空节点异常；重试后采集完成。仅描述本次采集窗口。"
+}

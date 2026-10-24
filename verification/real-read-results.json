@@ -1,0 +1,78 @@
+{
+  "scope": "用户授权的真实服务，只读；仅登录创建会话",
+  "results": [
+    {
+      "operation": "/healthz",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/libraries",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/providers",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/sources",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/tasks",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/downloads",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/follow",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/feeds",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/playlists",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/stats",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/items",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/item",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/assets/{id}/subtitles",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "operation": "/api/timeline",
+      "passed": true,
+      "status": 200
+    }
+  ],
+  "passed": 14,
+  "failed": 0,
+  "privacy": "不记录服务器地址、口令、Cookie、作品编号、标题或返回正文"
+}
