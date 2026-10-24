@@ -15,7 +15,7 @@
 
 播放器支持单击控制栏、双击暂停、长按 350 毫秒临时加速（默认 2 倍）、横向拖动定位、左侧亮度、右侧音量、手势锁定、字幕、版本和分卷、全屏、小窗及系统画中画。松开、取消或切后台恢复原倍率。实际格式和 HDR 能力取决于手机解码器与服务器转码工具。
 
-## 构建
+## 构建与 CI/CD
 
 安装 JDK 17 或 21、Android SDK Platform 36 / Build Tools，并配置 `ANDROID_HOME` 或本机 `local.properties` 的 `sdk.dir`。不要提交 `local.properties`。
 
@@ -26,6 +26,11 @@ python3 tools/package_debug.py
 ```
 
 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。这是调试签名版本，不作为商店发布签名。首次构建需要下载 Gradle 与 Maven 依赖。
+
+项目已配置 GitHub Actions 自动化工作流（`.github/workflows/build-apk.yml`）：
+- **分支推送与 PR**：推送到 `main` 分支时自动执行单元测试与 Lint 静态检查，编译打包并上传为 GitHub Actions 构建产物（Artifact）。
+- **版本发布**：推送以 `v` 开头的版本标签（如 `git tag v0.1.3 && git push origin v0.1.3`）时，会自动创建 GitHub Release 并附带最新的 APK 安装包及 `SHA256SUMS` 校验和文件。
+- **手动打包**：支持在 GitHub 仓库 Actions 页面一键点击 `workflow_dispatch` 手动触发打包与按需发布。
 
 ## 联调与测试
 
