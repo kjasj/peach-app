@@ -50,13 +50,17 @@ jobs:
         run: ./gradlew testDebugUnitTest lintDebug --stacktrace
 
       - name: 配置 Release 签名密钥 (如配置了 Secrets)
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          mkdir -p "$RUNNER_TEMP/keystore"
-          python3 -c "import os, base64; open(os.environ['RUNNER_TEMP'] + '/keystore/release.keystore', 'wb').write(base64.b64decode(os.environ['KEYSTORE_BASE64'].strip()))"
-          echo "KEYSTORE_PATH=$RUNNER_TEMP/keystore/release.keystore" >> "$GITHUB_ENV"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            mkdir -p "$RUNNER_TEMP/keystore"
+            python3 -c "import os, base64; open(os.environ['RUNNER_TEMP'] + '/keystore/release.keystore', 'wb').write(base64.b64decode(os.environ['KEYSTORE_BASE64'].strip()))"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/keystore/release.keystore" >> "$GITHUB_ENV"
+            echo "已成功加载正式 Release 签名密钥"
+          else
+            echo "未检测到 KEYSTORE_BASE64，将使用默认兜底证书签名"
+          fi
 
       - name: 编译 Release 与 Debug APK
         env:
